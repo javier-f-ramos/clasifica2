@@ -1,0 +1,58 @@
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 2rem;
+    background: white;
+    border-bottom: 1px solid hsl(var(--border));
+    height: 70px;
+}
+
+.logo {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: hsl(var(--primary));
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 100%;
+    /* Force it to respect navbar height */
+    position: relative;
+    /* For Next.js Image fill if needed, or just control */
+}
+
+.navLinks {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.link {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+    transition: color 0.2s;
+}
+
+.link:hover {
+    color: hsl(var(--foreground));
+}
+
+.actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.ctaButton {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    font-weight: 600;
+    transition: opacity 0.2s;
+}
+
+.ctaButton:hover {
+    opacity: 0.9;
+}
