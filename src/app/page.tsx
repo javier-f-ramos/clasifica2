@@ -1,24 +1,20 @@
-
 import ListingCard from "@/components/listings/ListingCard";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { HeroSection } from "@/components/home/HeroSection";
+import { ValueProps } from "@/components/home/ValueProps";
+import { CategoryGrid } from "@/components/home/CategoryGrid";
 
 export const revalidate = 60; // Revalidate every minute
 
 export default async function Home() {
   const supabase = await createClient();
 
-  // 1. Fetch Premium Listings (visible in Home)
-  // 1. Fetch Premium Listings (visible in Home)
+  // 1. Fetch Premium Listings
   let premiumListings: any[] = [];
   let recentListings: any[] = [];
-  let categories: any[] = [];
 
   try {
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("your-project")) {
-      throw new Error("Placeholder Env Vars detection");
-    }
     const { data: premium } = await supabase
       .from("listings")
       .select("*, listing_images(*), categories(*)")
@@ -37,112 +33,108 @@ export default async function Home() {
       .limit(8);
     recentListings = recent || [];
 
-    const { data: cats } = await supabase
-      .from("categories")
-      .select("*")
-      .order("sort_order");
-    categories = cats || [];
   } catch (err) {
-    console.warn("Database connection failed, using mock data for preview", err);
-    // Mock Data for Preview if DB fails
-    categories = [
-      { id: '1', name: 'Inmobiliaria', slug: 'inmobiliaria' },
-      { id: '2', name: 'Motor', slug: 'motor' },
-      { id: '3', name: 'Tecnología', slug: 'tecnologia' },
-      { id: '4', name: 'Hogar', slug: 'hogar' },
-      { id: '5', name: 'Empleo', slug: 'empleo' },
-    ];
-    const mockListing = {
-      id: '1', title: 'Apartamento Centro', price: 250000, city: 'Madrid', province: 'Madrid',
-      created_at: new Date().toISOString(), status: 'published', is_free: false,
-      listing_images: [], categories: { name: 'Inmobiliaria' }
-    };
-    premiumListings = [mockListing, mockListing, mockListing, mockListing] as any;
-    recentListings = [mockListing, mockListing, mockListing, mockListing] as any;
-  }
-
-  // Search Action
-  async function searchAction(formData: FormData) {
-    "use server";
-    const query = formData.get("q");
-    redirect(`/search?q=${query}`);
+    console.warn("Database connection failed, using mock data", err);
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      {/* Hero Section */}
-      <section className="bg-blue-600 text-white py-20 px-4 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold mb-6">
-          Conecta, vende y descubre tu ciudad.
-        </h1>
-        <p className="text-xl opacity-90 mb-8 max-w-2xl mx-auto">
-          Tu mercado local simplificado. Publica gratis y destaca tus anuncios.
-        </p>
+    <div className="bg-white min-h-screen font-sans">
+      <HeroSection />
 
-        <form action={searchAction} className="max-w-md mx-auto flex gap-2">
-          <input
-            name="q"
-            type="text"
-            placeholder="¿Qué estás buscando?"
-            className="flex-grow px-4 py-3 rounded text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-300"
-          />
-          <button className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded font-bold transition">
-            Buscar
-          </button>
-        </form>
-      </section>
+      <ValueProps />
 
-      {/* Categories Grid */}
-      <section className="container mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold mb-6 text-center">Explora por Categoría</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {categories?.map((cat) => (
-            <Link
-              key={cat.id}
-              href={`/search?category=${cat.id}`}
-              className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition text-center flex flex-col items-center gap-3 border hover:border-blue-500"
-            >
-              {/* Icon placeholder */}
-              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-xl font-bold">
-                {cat.name.charAt(0)}
-              </div>
-              <span className="font-medium text-gray-800">{cat.name}</span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Premium Listings */}
+      {/* Featured Listings Section */}
       {premiumListings && premiumListings.length > 0 && (
-        <section className="bg-white py-12 border-y">
-          <div className="container mx-auto px-4">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <span className="text-yellow-500">⭐</span> Anuncios Destacados
-              </h2>
+        <section className="bg-gray-50 py-16">
+          <div className="container mx-auto px-6 lg:px-8">
+            <div className="flex justify-between items-end mb-8">
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                  Anuncios Destacados
+                </h2>
+                <p className="mt-2 text-lg text-gray-600">
+                  Las mejores oportunidades seleccionadas para ti.
+                </p>
+              </div>
+              <Link href="/search?premium=true" className="hidden sm:block text-sm font-semibold leading-6 text-blue-600 hover:text-blue-500">
+                Ver todos <span aria-hidden="true">&rarr;</span>
+              </Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {premiumListings.map((listing) => (
-                <ListingCard key={listing.id} listing={listing as any} />
+                <div key={listing.id} className="h-full">
+                  <ListingCard listing={listing as any} />
+                </div>
               ))}
+            </div>
+
+            <div className="mt-8 text-center sm:hidden">
+              <Link href="/search?premium=true" className="text-sm font-semibold leading-6 text-blue-600 hover:text-blue-500">
+                Ver todos <span aria-hidden="true">&rarr;</span>
+              </Link>
             </div>
           </div>
         </section>
       )}
 
-      {/* Recent Listings */}
-      <section className="container mx-auto px-4 py-12">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Recién Añadido</h2>
-          <Link href="/search" className="text-blue-600 hover:underline">Ver todo &rarr;</Link>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-          {recentListings?.map((listing) => (
-            <ListingCard key={listing.id} listing={listing as any} />
-          ))}
+      {/* Categories Section */}
+      <CategoryGrid />
+
+      {/* Recent Listings Section */}
+      <section className="py-16">
+        <div className="container mx-auto px-6 lg:px-8">
+          <div className="flex justify-between items-end mb-8">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                Recién Añadido
+              </h2>
+              <p className="mt-2 text-lg text-gray-600">
+                Lo último que ha llegado a tu ciudad.
+              </p>
+            </div>
+            <Link href="/search" className="hidden sm:block text-sm font-semibold leading-6 text-blue-600 hover:text-blue-500">
+              Ver todo el catálogo <span aria-hidden="true">&rarr;</span>
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {recentListings.map((listing) => (
+              <div key={listing.id} className="h-full">
+                <ListingCard listing={listing as any} />
+              </div>
+            ))}
+          </div>
+          <div className="mt-10 border-t border-gray-100 pt-10 text-center">
+            <Link
+              href="/publish"
+              className="rounded-md bg-blue-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+            >
+              ¿Tienes algo que vender? Publícalo hoy
+            </Link>
+          </div>
         </div>
       </section>
 
+      {/* CTA / Testimonial Placeholder */}
+      <section className="relative isolate overflow-hidden bg-blue-600 py-16 sm:py-24 lg:py-32">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            ¿Listo para vender?
+          </h2>
+          <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-blue-100">
+            Únete a miles de personas que ya están vendiendo y comprando en su ciudad.
+          </p>
+          <div className="mt-10 flex items-center justify-center gap-x-6">
+            <Link
+              href="/publish"
+              className="rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-blue-600 shadow-sm hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            >
+              Empezar Ahora
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

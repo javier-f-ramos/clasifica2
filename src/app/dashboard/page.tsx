@@ -1,8 +1,8 @@
-
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Database } from "@/types/supabase";
+import DashboardListingCard from "@/components/dashboard/DashboardListingCard";
+import { PlusCircle, LayoutDashboard } from "lucide-react";
 
 export default async function DashboardPage() {
     const supabase = await createClient();
@@ -26,93 +26,59 @@ export default async function DashboardPage() {
     const isLimitReached = activeCount >= 10;
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <div className="flex justify-between items-center mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold">Mis Anuncios</h1>
-                    <p className="text-gray-600">
-                        Gestiona tus publicaciones. Activos: {activeCount}/10
-                    </p>
-                </div>
-                {isLimitReached ? (
-                    <div className="px-4 py-2 bg-gray-300 text-gray-600 rounded cursor-not-allowed">
-                        Límite Alcanzado
+        <div className="min-h-screen bg-gray-50 py-8">
+            <div className="container mx-auto px-4 max-w-5xl">
+                {/* Header */}
+                <div className="flex flex-col md:flex-row justify-between items-end md:items-center mb-10 gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+                            <LayoutDashboard className="w-8 h-8 text-blue-600" />
+                            Mis Anuncios
+                        </h1>
+                        <p className="mt-1 text-gray-500">
+                            Administra tus ventas y promociones desde aquí.
+                        </p>
                     </div>
-                ) : (
-                    <Link
-                        href="/publish"
-                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-                    >
-                        Crear Anuncio
-                    </Link>
-                )}
-            </div>
 
-            <div className="grid gap-4">
-                {listings && listings.length > 0 ? (
-                    listings.map((listing) => (
-                        <div
-                            key={listing.id}
-                            className="border p-4 rounded-lg bg-white shadow-sm flex flex-col md:flex-row gap-4 items-start md:items-center"
-                        >
-                            <div className="w-24 h-24 bg-gray-100 rounded flex-shrink-0 relative overflow-hidden">
-                                {/* Placeholder for image */}
-                                {(listing as any).listing_images?.[0] ? (
-                                    <img src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/listings/${(listing as any).listing_images[0].storage_path}`} className="object-cover w-full h-full" alt={listing.title} />
-                                ) : (
-                                    <div className="flex items-center justify-center w-full h-full text-gray-400 text-xs">Sin Foto</div>
-                                )}
-                            </div>
-                            <div className="flex-grow">
-                                <div className="flex justify-between">
-                                    <h3 className="text-xl font-semibold">{listing.title}</h3>
-                                    <span className={`px-2 py-0.5 text-xs rounded-full ${listing.status === 'published' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                                        {listing.status === 'published' ? 'Activo' : listing.status === 'paused' ? 'Pausado' : 'Eliminado'}
-                                    </span>
-                                </div>
-                                <p className="text-sm text-gray-500">{(listing as any).categories?.name} • {listing.city}</p>
-                                <p className="font-bold text-gray-900 mt-1">
-                                    {listing.is_free ? "GRATIS" : `$${listing.price}`}
-                                </p>
-                                {/* Expiration or features */}
-                                {listing.featured_until && new Date(listing.featured_until) > new Date() && (
-                                    <span className="text-xs text-yellow-600 font-bold mr-2">⭐ Destacado</span>
-                                )}
-                                {listing.premium_until && new Date(listing.premium_until) > new Date() && (
-                                    <span className="text-xs text-purple-600 font-bold">💎 Premium</span>
-                                )}
-                            </div>
-                            <div className="flex gap-2">
-                                <Link href={`/publish?id=${listing.id}`} className="px-3 py-1 border rounded text-sm hover:bg-gray-50">Editar</Link>
-                                {listing.status === 'published' ? (
-                                    <form action={async () => {
-                                        'use server';
-                                        const sb = await createClient();
-                                        await sb.from('listings').update({ status: 'paused' }).eq('id', listing.id);
-                                        redirect('/dashboard');
-                                    }}>
-                                        <button className="px-3 py-1 border rounded text-sm hover:bg-gray-50">Pausar</button>
-                                    </form>
-                                ) : (
-                                    <form action={async () => {
-                                        'use server';
-                                        const sb = await createClient();
-                                        // Check limit again strictly speaking, but trigger will handle it
-                                        await sb.from('listings').update({ status: 'published' }).eq('id', listing.id);
-                                        redirect('/dashboard');
-                                    }}>
-                                        <button disabled={isLimitReached} className="px-3 py-1 border rounded text-sm hover:bg-gray-50 disabled:opacity-50">Activar</button>
-                                    </form>
-                                )}
-                                <Link href={`/promote?id=${listing.id}`} className="px-3 py-1 border border-yellow-400 text-yellow-700 rounded text-sm hover:bg-yellow-50">Destacar</Link>
-                            </div>
+                    <div className="flex items-center gap-4 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                        <div className="text-right mr-2 my-1">
+                            <span className="block text-xs text-gray-400 uppercase font-bold tracking-wider">Anuncios Activos</span>
+                            <span className={`text-xl font-bold ${isLimitReached ? 'text-red-600' : 'text-gray-900'}`}>{activeCount}<span className="text-gray-400 text-sm">/10</span></span>
                         </div>
-                    ))
-                ) : (
-                    <div className="text-center py-12 text-gray-500">
-                        No tienes anuncios publicados aún.
+                        {isLimitReached ? (
+                            <button disabled className="px-4 py-2 bg-gray-100 text-gray-400 rounded-lg cursor-not-allowed font-medium text-sm">
+                                Límite Alcanzado
+                            </button>
+                        ) : (
+                            <Link
+                                href="/publish"
+                                className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm font-semibold text-sm"
+                            >
+                                <PlusCircle className="w-4 h-4" /> Crear Anuncio
+                            </Link>
+                        )}
                     </div>
-                )}
+                </div>
+
+                {/* Listings Grid */}
+                <div className="space-y-4">
+                    {listings && listings.length > 0 ? (
+                        listings.map((listing) => (
+                            <DashboardListingCard key={listing.id} listing={listing} isLimitReached={isLimitReached} />
+                        ))
+                    ) : (
+                        <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
+                            <div className="mx-auto w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                <PlusCircle className="w-8 h-8 text-gray-400" />
+                            </div>
+                            <h3 className="text-lg font-medium text-gray-900">No tienes anuncios aún</h3>
+                            <p className="text-gray-500 max-w-sm mx-auto mt-2 mb-6">Empecemos a vender. Es gratis y solo toma unos minutos.</p>
+                            <Link href="/publish" className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition font-medium">
+                                Publicar mi primer anuncio
+                            </Link>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
