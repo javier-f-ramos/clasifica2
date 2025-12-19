@@ -19,32 +19,32 @@ function LoginForm() {
         e.preventDefault();
         setLoading(true);
 
-        if (mode === "signup") {
-            const { error } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    emailRedirectTo: `${location.origin}/auth/callback`,
-                },
-            });
-            if (error) {
-                alert(error.message);
-            } else {
+        try {
+            if (mode === "signup") {
+                const { error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        emailRedirectTo: `${location.origin}/auth/callback`,
+                    },
+                });
+                if (error) throw error;
                 alert("¡Revisa tu email para confirmar tu cuenta!");
-            }
-        } else {
-            const { error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
-            if (error) {
-                alert(error.message);
             } else {
+                const { error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                });
+                if (error) throw error;
                 router.push("/");
                 router.refresh();
             }
+        } catch (error: any) {
+            console.error("Auth error:", error);
+            alert(error.message || "Ha ocurrido un error durante la autenticación");
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     return (
